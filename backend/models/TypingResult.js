@@ -10,4 +10,7 @@ const typingResultSchema = new mongoose.Schema({
   timestamp: { type: Date, default: Date.now }
 });
 
+// Add compound index on user and timestamp
+typingResultSchema.index({ user: 1, timestamp: -1 });
+
 module.exports = mongoose.model('TypingResult', typingResultSchema); 
