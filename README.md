@@ -1,5 +1,7 @@
 # ⚡ TypeBolt
 
+[![TypeBolt CI](https://github.com/invincible1786/typebolt/actions/workflows/ci.yml/badge.svg)](https://github.com/invincible1786/typebolt/actions/workflows/ci.yml)
+
 **TypeBolt** is a fast and engaging typing speed test web application built with a **React** frontend and a **Node.js/Express** backend. It allows users to take 60-second typing tests on dynamic paragraphs and tracks performance across metrics like WPM, accuracy, and history — all visualized in a user-friendly dashboard.
 
 ---
@@ -46,7 +48,7 @@
 ### 🔧 Clone & Install
 
 ```bash
-git clone https://github.com/your-username/typebolt.git
+git clone https://github.com/invincible1786/typebolt.git
 cd typebolt 
 ```
 
