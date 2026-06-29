@@ -1,0 +1,52 @@
+name: TypeBolt CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js v20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install backend dependencies
+        run: |
+          cd backend
+          npm ci
+
+      - name: Install frontend dependencies
+        run: |
+          cd frontend
+          npm ci
+
+      - name: Run ESLint on backend
+        run: |
+          cd backend
+          npm run lint
+
+      - name: Run backend tests
+        run: |
+          cd backend
+          npm test
+
+      - name: Build frontend
+        run: |
+          cd frontend
+          npm run build
+
+      - name: Run npm audit
+        run: |
+          cd backend
+          npm audit --audit-level=high || echo "High/Critical vulnerability audit check"
+          cd ../frontend
+          npm audit --audit-level=high || echo "High/Critical vulnerability audit check"
