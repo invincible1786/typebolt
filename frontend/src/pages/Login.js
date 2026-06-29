@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { authAPI } from '../utils/api';
+import { useAuth } from '../context/AuthContext';
 import './Login.css';
 
-const Login = ({ onLogin }) => {
+const Login = () => {
+  const { login } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -25,7 +27,7 @@ const Login = ({ onLogin }) => {
 
     try {
       const response = await authAPI.login(formData);
-      onLogin(response.data.user, response.data.token);
+      login(response.data.user, response.data.token);
     } catch (err) {
       setError(err.response?.data?.message || 'Login failed. Please try again.');
     } finally {

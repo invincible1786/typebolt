@@ -6,9 +6,9 @@ export const calculateWPM = (typedWords, timeInSeconds) => {
 };
 
 // Calculate accuracy percentage
-export const calculateAccuracy = (totalCharacters, errors) => {
-  if (totalCharacters === 0) return 100;
-  const accuracy = ((totalCharacters - errors) / totalCharacters) * 100;
+export const calculateAccuracy = (typedCharacters, errors) => {
+  if (typedCharacters === 0) return 100;
+  const accuracy = ((typedCharacters - errors) / typedCharacters) * 100;
   return Math.round(accuracy * 100) / 100;
 };
 

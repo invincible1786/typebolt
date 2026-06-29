@@ -3,7 +3,7 @@ import { typingAPI } from '../utils/api';
 import { calculateWPM, calculateAccuracy, countWords, findErrors, formatTime, getSpeedCategory } from '../utils/typingUtils';
 import './TypingTest.css';
 
-const TypingTest = ({ token }) => {
+const TypingTest = () => {
   const [paragraph, setParagraph] = useState('');
   const [typedText, setTypedText] = useState('');
   const [timeLeft, setTimeLeft] = useState(60);
@@ -125,14 +125,15 @@ const TypingTest = ({ token }) => {
     const typedWords = countWords(typedText);
     const totalErrors = errors.length;
     const wpm = calculateWPM(typedWords, 60 - timeLeft);
-    const accuracy = calculateAccuracy(paragraph.length, totalErrors);
+    const accuracy = calculateAccuracy(currentIndex, totalErrors);
 
     const testResults = {
       wpm,
       accuracy,
       errors: totalErrors,
       timeTaken: 60 - timeLeft,
-      paragraph
+      paragraph,
+      typedText
     };
 
     setResults(testResults);

@@ -3,7 +3,7 @@ import { typingAPI } from '../utils/api';
 import { formatTime, getSpeedCategory } from '../utils/typingUtils';
 import './Dashboard.css';
 
-const Dashboard = ({ token }) => {
+const Dashboard = () => {
   const [stats, setStats] = useState(null);
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
