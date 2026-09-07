@@ -21,5 +21,9 @@ build/
 dist/
 frontend/build/
 
+# Coverage
+coverage/
+**/coverage/
+
 # VSCode
 .vscode/

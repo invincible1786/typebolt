@@ -8,8 +8,11 @@ const client = createClient({
   url: redisUrl,
   socket: {
     reconnectStrategy: (retries) => {
-      // Auto-reconnect logic
-      // Return a number of milliseconds to wait before retrying, or an Error to stop retrying
+      // Auto-reconnect logic with a maximum retry ceiling
+      if (retries > 3) {
+        console.warn('⚠️ Redis max connection retries reached. Operating in MongoDB fallback mode.');
+        return new Error('Redis connection failed: max retries reached.');
+      }
       const delay = Math.min(retries * 100, 3000);
       console.warn(`Redis connection lost. Reconnecting in ${delay}ms... (Attempt ${retries})`);
       return delay;

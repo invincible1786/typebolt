@@ -1,16 +1,26 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import './Navbar.css';
 
 const Navbar = () => {
   const { user, logout } = useAuth();
+  const [theme, setTheme] = useState(() => localStorage.getItem('typebolt_theme') || 'neon');
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('typebolt_theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme(prev => (prev === 'neon' ? 'cyber' : 'neon'));
+  };
 
   return (
     <nav className="navbar">
       <div className="navbar-container">
         <Link to="/test" className="navbar-brand">
-          TypeBolt
+          ⚡ TypeBolt
         </Link>
         <div className="navbar-menu">
           <Link to="/test" className="navbar-link">
@@ -21,7 +31,14 @@ const Navbar = () => {
           </Link>
         </div>
         <div className="navbar-user">
-          {user && <span className="username">Welcome, {user.username}!</span>}
+          <button
+            onClick={toggleTheme}
+            className="theme-toggle-btn"
+            title="Toggle Visual Theme"
+          >
+            {theme === 'neon' ? '⚡ Neon' : '🌐 Cyber'}
+          </button>
+          {user && <span className="username">👋 {user.username}</span>}
           <button onClick={logout} className="logout-btn">
             Logout
           </button>

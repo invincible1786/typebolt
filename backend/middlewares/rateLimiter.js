@@ -25,7 +25,19 @@ const loginLimiter = isTest ? (req, res, next) => next() : rateLimit({
   legacyHeaders: false,
 });
 
+// Limit typing result submissions to mitigate automated spam and fake results
+const typingResultLimiter = isTest ? (req, res, next) => next() : rateLimit({
+  windowMs: 5 * 60 * 1000, // 5 minutes
+  max: 20, // max 20 tests saved every 5 minutes
+  message: {
+    message: 'Too many typing test submissions. Please wait a few minutes before submitting another test.'
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 module.exports = {
   registerLimiter,
-  loginLimiter
+  loginLimiter,
+  typingResultLimiter
 };

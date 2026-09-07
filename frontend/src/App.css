@@ -1,7 +1,32 @@
+:root {
+  --bg-main: #141414;
+  --bg-card: #202020;
+  --bg-card-hover: #282828;
+  --border-color: #333333;
+  --accent-primary: #00ff88;
+  --accent-primary-hover: #00cc6a;
+  --accent-glow: rgba(0, 255, 136, 0.25);
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+}
+
+[data-theme="cyber"] {
+  --bg-main: #0b0f19;
+  --bg-card: #111827;
+  --bg-card-hover: #1f2937;
+  --border-color: #1e293b;
+  --accent-primary: #38bdf8;
+  --accent-primary-hover: #0284c7;
+  --accent-glow: rgba(56, 189, 248, 0.25);
+  --text-main: #f1f5f9;
+  --text-muted: #94a3b8;
+}
+
 .App {
   min-height: 100vh;
-  background-color: #1a1a1a;
-  color: #ffffff;
+  background-color: var(--bg-main);
+  color: var(--text-main);
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .container {
@@ -11,83 +36,107 @@
 }
 
 .form-container {
-  max-width: 400px;
-  margin: 100px auto;
+  max-width: 420px;
+  margin: 80px auto;
   padding: 40px;
-  border: 1px solid #444;
-  border-radius: 8px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-  background-color: #2a2a2a;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+  background-color: var(--bg-card);
 }
 
 .form-title {
   text-align: center;
-  margin-bottom: 30px;
+  margin-bottom: 25px;
   color: #ffffff;
   font-size: 24px;
-  font-weight: 600;
+  font-weight: 700;
+  letter-spacing: -0.5px;
 }
 
 .form-group {
-  margin-bottom: 20px;
+  margin-bottom: 18px;
 }
 
 .form-label {
   display: block;
-  margin-bottom: 8px;
-  color: #ccc;
+  margin-bottom: 6px;
+  color: #bbb;
+  font-size: 14px;
   font-weight: 500;
 }
 
 .form-input {
   width: 100%;
-  padding: 12px;
-  border: 1px solid #444;
-  border-radius: 4px;
-  font-size: 16px;
-  background-color: #1a1a1a;
+  padding: 12px 14px;
+  border: 1.5px solid var(--border-color);
+  border-radius: 6px;
+  font-size: 15px;
+  background-color: #161616;
   color: #ffffff;
-  transition: border-color 0.3s;
+  transition: border-color 0.25s, box-shadow 0.25s;
+  box-sizing: border-box;
 }
 
 .form-input:focus {
   outline: none;
-  border-color: #00ff88;
-  box-shadow: 0 0 0 2px rgba(0, 255, 136, 0.2);
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+.input-error {
+  border-color: #ef4444 !important;
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.25) !important;
+}
+
+.field-error-text {
+  color: #ef4444;
+  font-size: 12px;
+  margin-top: 5px;
+  display: block;
+  font-weight: 500;
 }
 
 .btn {
   width: 100%;
   padding: 12px;
   border: none;
-  border-radius: 4px;
-  font-size: 16px;
-  font-weight: 500;
+  border-radius: 6px;
+  font-size: 15px;
+  font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.3s;
+  transition: all 0.25s ease;
+  box-sizing: border-box;
 }
 
 .btn-primary {
-  background-color: #00ff88;
-  color: #1a1a1a;
+  background-color: var(--accent-primary);
+  color: #111;
 }
 
-.btn-primary:hover {
-  background-color: #00cc6a;
+.btn-primary:hover:not(:disabled) {
+  background-color: var(--accent-primary-hover);
+  transform: translateY(-1px);
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .btn-secondary {
-  background-color: #666;
+  background-color: #333;
   color: #ffffff;
 }
 
-.btn-secondary:hover {
-  background-color: #555;
+.btn-secondary:hover:not(:disabled) {
+  background-color: #444;
 }
 
 .link {
-  color: #00ff88;
+  color: var(--accent-primary);
   text-decoration: none;
+  font-weight: 500;
 }
 
 .link:hover {
@@ -103,13 +152,39 @@
 }
 
 .error {
-  color: #ff4444;
-  font-size: 14px;
-  margin-top: 5px;
+  color: #ef4444;
+  background-color: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  padding: 10px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  margin-top: 10px;
+  margin-bottom: 5px;
 }
 
 .success {
   color: #00ff88;
   font-size: 14px;
   margin-top: 5px;
+}
+
+/* Route-level sleek loading screen */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background-color: #141414;
+  color: #888;
+}
+
+.app-loader {
+  width: 44px;
+  height: 44px;
+  border: 3px solid #282828;
+  border-top-color: #00ff88;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-bottom: 16px;
 } 

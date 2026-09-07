@@ -70,8 +70,50 @@ const del = async (key) => {
   }
 };
 
+/**
+ * Add or update a member score in a Redis Sorted Set.
+ * @param {string} key - Redis key.
+ * @param {number} score - Score value (e.g. WPM).
+ * @param {string} member - Member identifier (e.g. userId:username).
+ * @returns {Promise<boolean>}
+ */
+const zAdd = async (key, score, member) => {
+  try {
+    if (!client.isReady) {
+      return false;
+    }
+    await client.zAdd(key, [{ score: Number(score), value: String(member) }]);
+    return true;
+  } catch (error) {
+    console.warn(`⚠️ Cache ZADD failed for key "${key}": ${error.message}`);
+    return false;
+  }
+};
+
+/**
+ * Get top scored members from a Redis Sorted Set (highest to lowest).
+ * @param {string} key - Redis key.
+ * @param {number} [start=0] - Starting rank index.
+ * @param {number} [stop=9] - Ending rank index.
+ * @returns {Promise<Array<{value: string, score: number}>|null>}
+ */
+const zRevRangeWithScores = async (key, start = 0, stop = 9) => {
+  try {
+    if (!client.isReady) {
+      return null;
+    }
+    const results = await client.zRangeWithScores(key, start, stop, { REV: true });
+    return results;
+  } catch (error) {
+    console.warn(`⚠️ Cache ZREVRANGE failed for key "${key}": ${error.message}`);
+    return null;
+  }
+};
+
 module.exports = {
   get,
   set,
-  del
+  del,
+  zAdd,
+  zRevRangeWithScores
 };

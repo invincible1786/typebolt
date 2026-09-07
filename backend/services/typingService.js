@@ -1,11 +1,11 @@
-const axios = require('axios');
 const mongoose = require('mongoose');
 const TypingResult = require('../models/TypingResult');
+const User = require('../models/User');
 const { ValidationError } = require('../utils/customErrors');
 const { calculateAccuracy } = require('../utils/accuracy');
 const cacheService = require('./cacheService');
 
-const FALLBACK_PARAGRAPHS = [
+const PARAGRAPH_BANK = [
   "Technology has revolutionized the way we communicate, work, and live. From the early days of bulky desktop computers to the modern era of sleek smartphones and smart home devices, our lives are deeply intertwined with digital systems. As technology continues to evolve at a breakneck pace, staying adaptable and continuously learning new digital skills has become essential for personal and professional growth in the twenty-first century.",
   "The sun is the star at the center of the Solar System. It is a nearly perfect ball of hot plasma, heated to incandescence by nuclear fusion reactions in its core. The sun radiates this energy mainly as light, ultraviolet, and infrared radiation, providing the most important source of energy for life on Earth. Its gravity holds the solar system together, keeping everything from the biggest planets to tiny debris in orbit.",
   "Deep learning is a subset of machine learning, which is in turn a subset of artificial intelligence. It is based on artificial neural networks with multiple layers, hence the name deep. These neural networks attempt to simulate the behavior of the human brain, allowing it to learn from large amounts of data. By training these systems on massive datasets, they can achieve human-like accuracy in recognizing speech and images.",
@@ -23,16 +23,16 @@ const FALLBACK_PARAGRAPHS = [
   "The universe is an vast expanse of space containing all matter and energy, from tiny subatomic particles to massive galaxies. Cosmologists estimate that the universe is approximately thirteen point eight billion years old, expanding continuously since the Big Bang. Exploring the cosmos through powerful telescopes allows us to peer back in time and uncover the mysteries of black holes, dark matter, and distant planets.",
   "Bicycle commuting is a healthy, economical, and environmentally friendly way to travel to work or school. By choosing to ride a bicycle instead of driving a car, commuters can incorporate physical exercise into their daily routines, reduce traffic congestion, and lower their carbon footprint. Many cities are expanding their cycling infrastructure with dedicated bike lanes to encourage this active form of transport.",
   "The printing press, invented by Johannes Gutenberg in the fifteenth century, is widely considered one of the most influential events in human history. By enabling the mass production of books, it democratized access to information, accelerated the spread of scientific knowledge, and fueled the Renaissance. The printing press laid the foundation for the modern information age and transformed global education.",
-  "A healthy diet is essential for maintaining physical well-being and preventing chronic diseases. Eating a variety of nutrient-rich foods, including fruits, vegetables, whole grains, lean proteins, and healthy fats, provides the body with the energy and nutrients it needs to function optimally. Combined with regular physical activity, a balanced diet is one of the most powerful tools for longevity and vitality."
+  "A healthy diet is essential for maintaining physical well-being and preventing chronic diseases. Eating a variety of nutrient-rich foods, including fruits, vegetables, whole grains, lean proteins, and healthy fats, provides the body with the energy and nutrients it needs to function optimally. Combined with regular physical activity, a balanced diet is one of the most powerful tools for longevity and vitality.",
+  "Computer programs are structured sequences of instructions designed to perform specific computational tasks. From low-level assembly operating close to hardware registers to declarative high-level functional paradigms, programming languages empower humans to abstract complex mathematical problems into elegant, maintainable solutions.",
+  "Space exploration stands as humanity's boldest endeavor to understand our origin and destiny among the stars. Robotic probes like Voyager have ventured beyond the heliosphere into interstellar space, carrying greetings from Earth while relaying invaluable telemetry from the cosmic frontier."
 ];
 
-// Get random paragraph
+// Get random paragraph with zero-latency local fallback and Redis caching
 const getRandomParagraph = async () => {
-  // 1. Before calling Quotable API: GET paragraph:random
   const cached = await cacheService.get('paragraph:random');
   if (cached) {
     if (Array.isArray(cached) && cached.length > 0) {
-      // Pick a random paragraph from the bank of pre-cached paragraphs
       return cached[Math.floor(Math.random() * cached.length)];
     }
     if (typeof cached === 'string') {
@@ -40,51 +40,33 @@ const getRandomParagraph = async () => {
     }
   }
 
-  try {
-    const response = await axios.get('https://api.quotable.io/random?maxLength=800&minLength=500', { timeout: 2000 });
-    const content = response.data.content;
-
-    // Build a bank of 5-10 paragraphs (e.g. 10) by combining the fetched one and fallbacks
-    const bank = [content];
-    while (bank.length < 10) {
-      const fallback = FALLBACK_PARAGRAPHS[Math.floor(Math.random() * FALLBACK_PARAGRAPHS.length)];
-      if (!bank.includes(fallback)) {
-        bank.push(fallback);
-      }
-    }
-
-    // Cache the bank with a 1-hour TTL (3600 seconds)
-    await cacheService.set('paragraph:random', bank, 3600);
-    return content;
-  } catch (error) {
-    console.warn('Quotable API request failed or timed out. Using fallback paragraph. Error:', error.message);
-    const randomParagraph = FALLBACK_PARAGRAPHS[Math.floor(Math.random() * FALLBACK_PARAGRAPHS.length)];
-    
-    // Cache the fallback paragraphs bank on failure to mitigate future API downtimes
-    await cacheService.set('paragraph:random', FALLBACK_PARAGRAPHS, 3600);
-    return randomParagraph;
-  }
+  // Pre-seed cache with local bank so subsequent hits are instant
+  await cacheService.set('paragraph:random', PARAGRAPH_BANK, 3600);
+  const randomParagraph = PARAGRAPH_BANK[Math.floor(Math.random() * PARAGRAPH_BANK.length)];
+  return randomParagraph;
 };
 
-// Save typing result (with server-side recomputation)
-const saveResult = async ({ userId, typedText, timeTaken, errors, paragraph }) => {
-  if (typeof typedText !== 'string' || typeof timeTaken !== 'number' || typeof errors !== 'number') {
+// Save typing result (with server-side recomputation and anti-cheat validation)
+const saveResult = async ({ userId, typedText, timeTaken, errors, errorCount, paragraph }) => {
+  const finalErrors = typeof errorCount === 'number' ? errorCount : errors;
+
+  if (typeof typedText !== 'string' || typeof timeTaken !== 'number' || typeof finalErrors !== 'number') {
     throw new ValidationError('Invalid request data');
   }
 
-  // Recompute values server-side
+  // Recompute values server-side using standard chars/5 formula
   let computedWpm = 0;
   if (timeTaken > 0) {
     computedWpm = Math.round((typedText.length / 5) / (timeTaken / 60));
   }
 
-  const computedAccuracy = calculateAccuracy(typedText.length, errors);
+  const computedAccuracy = calculateAccuracy(typedText.length, finalErrors);
 
   const result = new TypingResult({
     user: new mongoose.Types.ObjectId(userId),
     wpm: computedWpm,
     accuracy: computedAccuracy,
-    errors,
+    errorCount: finalErrors,
     timeTaken,
     paragraph
   });
@@ -93,6 +75,18 @@ const saveResult = async ({ userId, typedText, timeTaken, errors, paragraph }) =
 
   // Invalidate user stats cache when a new test is submitted
   await cacheService.del(`stats:${userId}`);
+  // Invalidate leaderboard cache
+  await cacheService.del('leaderboard:top');
+
+  // Update Redis Sorted Set leaderboard if user exists
+  try {
+    const user = await User.findById(userId).select('username').lean();
+    if (user && user.username) {
+      await cacheService.zAdd('leaderboard:global', computedWpm, `${userId}:${user.username}`);
+    }
+  } catch (err) {
+    console.warn(`Could not update Redis sorted set for user ${userId}:`, err.message);
+  }
 
   return result;
 };
@@ -101,7 +95,6 @@ const saveResult = async ({ userId, typedText, timeTaken, errors, paragraph }) =
 const getUserStats = async (userId) => {
   const cacheKey = `stats:${userId}`;
   
-  // 1. Before aggregation: GET stats:{userId}
   const cachedStats = await cacheService.get(cacheKey);
   if (cachedStats) {
     return cachedStats;
@@ -127,7 +120,6 @@ const getUserStats = async (userId) => {
       bestWpm: 0,
       averageAccuracy: 0
     };
-    // Cache empty stats with 5-minute TTL
     await cacheService.set(cacheKey, emptyStats, 300);
     return emptyStats;
   }
@@ -141,7 +133,6 @@ const getUserStats = async (userId) => {
     averageAccuracy: Math.round(averageAccuracy * 100) / 100
   };
 
-  // Cache stats with 5-minute TTL
   await cacheService.set(cacheKey, resultStats, 300);
 
   return resultStats;
@@ -168,9 +159,82 @@ const getUserHistory = async ({ userId, page = 1, limit = 20 }) => {
   };
 };
 
+// Get global leaderboard (Redis sorted set with MongoDB fallback)
+const getLeaderboard = async (limit = 10) => {
+  const sanitizedLimit = Math.min(Math.max(1, limit), 50);
+  const cacheKey = `leaderboard:top:${sanitizedLimit}`;
+
+  const cached = await cacheService.get(cacheKey);
+  if (cached) {
+    return cached;
+  }
+
+  // 1. Try Redis Sorted Set
+  const redisScores = await cacheService.zRevRangeWithScores('leaderboard:global', 0, sanitizedLimit - 1);
+  if (redisScores && redisScores.length > 0) {
+    const leaderboard = redisScores.map((entry, index) => {
+      const parts = entry.value.split(':');
+      const username = parts.length > 1 ? parts.slice(1).join(':') : parts[0];
+      return {
+        rank: index + 1,
+        username,
+        wpm: entry.score
+      };
+    });
+    await cacheService.set(cacheKey, leaderboard, 60);
+    return leaderboard;
+  }
+
+  // 2. Fallback to MongoDB Aggregation
+  const mongoLeaders = await TypingResult.aggregate([
+    { $sort: { wpm: -1, timestamp: -1 } },
+    {
+      $group: {
+        _id: "$user",
+        wpm: { $max: "$wpm" },
+        accuracy: { $first: "$accuracy" },
+        timestamp: { $first: "$timestamp" }
+      }
+    },
+    { $sort: { wpm: -1 } },
+    { $limit: sanitizedLimit },
+    {
+      $lookup: {
+        from: "users",
+        localField: "_id",
+        foreignField: "_id",
+        as: "userInfo"
+      }
+    },
+    { $unwind: "$userInfo" },
+    {
+      $project: {
+        _id: 1,
+        username: "$userInfo.username",
+        wpm: 1,
+        accuracy: 1,
+        timestamp: 1
+      }
+    }
+  ]);
+
+  const leaderboard = mongoLeaders.map((item, index) => ({
+    rank: index + 1,
+    username: item.username,
+    wpm: item.wpm,
+    accuracy: item.accuracy,
+    timestamp: item.timestamp
+  }));
+
+  // Cache for 60 seconds
+  await cacheService.set(cacheKey, leaderboard, 60);
+  return leaderboard;
+};
+
 module.exports = {
   getRandomParagraph,
   saveResult,
   getUserStats,
-  getUserHistory
+  getUserHistory,
+  getLeaderboard
 };

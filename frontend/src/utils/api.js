@@ -26,8 +26,9 @@ export const authAPI = {
 export const typingAPI = {
   getParagraph: () => api.get('/paragraph'),
   saveResult: (result) => api.post('/typing-result', result),
-  getHistory: () => api.get('/typing-history'),
+  getHistory: (page = 1, limit = 10) => api.get(`/typing-history?page=${page}&limit=${limit}`),
   getStats: () => api.get('/user-stats'),
+  getLeaderboard: (limit = 10) => api.get(`/leaderboard?limit=${limit}`),
 };
 
 export default api; 

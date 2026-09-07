@@ -11,13 +11,23 @@ const getRandomParagraph = async (req, res, next) => {
 
 const saveResult = async (req, res, next) => {
   try {
-    const { typedText, timeTaken, errors, paragraph } = req.body;
+    const { typedText, timeTaken, errors, errorCount, paragraph } = req.body;
     const userId = req.user.userId;
+    const finalErrors = errorCount !== undefined ? errorCount : errors;
     
-    const result = await typingService.saveResult({ userId, typedText, timeTaken, errors, paragraph });
+    const result = await typingService.saveResult({
+      userId,
+      typedText,
+      timeTaken,
+      errors: finalErrors,
+      errorCount: finalErrors,
+      paragraph
+    });
     
-    // Optional debug log
-    console.log(`Recomputed results server-side for user ${userId}: WPM=${result.wpm}, Accuracy=${result.accuracy}% (Client sent WPM=${req.body.wpm}, Accuracy=${req.body.accuracy}%)`);
+    // Server-side audit log
+    if (process.env.NODE_ENV !== 'test') {
+      console.log(`Recomputed results server-side for user ${userId}: WPM=${result.wpm}, Accuracy=${result.accuracy}% (Client sent WPM=${req.body.wpm}, Accuracy=${req.body.accuracy}%)`);
+    }
 
     res.status(201).json({ message: 'Result saved successfully', result });
   } catch (error) {
@@ -49,9 +59,20 @@ const getUserHistory = async (req, res, next) => {
   }
 };
 
+const getLeaderboard = async (req, res, next) => {
+  try {
+    const limit = parseInt(req.query.limit, 10) || 10;
+    const leaderboard = await typingService.getLeaderboard(limit);
+    res.json({ leaderboard });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getRandomParagraph,
   saveResult,
   getUserStats,
-  getUserHistory
+  getUserHistory,
+  getLeaderboard
 };

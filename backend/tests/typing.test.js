@@ -186,4 +186,31 @@ describe('Typing Endpoints', () => {
     expect(res.body.limit).toBe(2);
     expect(res.body.totalPages).toBe(2);
   });
+
+  // 9. Save typing result with errorCount -> succeeds
+  test('9. Save typing result with errorCount -> succeeds', async () => {
+    const res = await request(app)
+      .post('/api/typing-result')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        typedText: 'Testing with explicit errorCount',
+        timeTaken: 12,
+        errorCount: 2,
+        paragraph: 'Testing with explicit errorCount'
+      });
+
+    expect(res.statusCode).toBe(201);
+    expect(res.body.result.errorCount).toBe(2);
+    expect(res.body.result.errors).toBe(2);
+  });
+
+  // 10. Get global leaderboard -> succeeds and returns array
+  test('10. Get global leaderboard -> succeeds', async () => {
+    const res = await request(app)
+      .get('/api/leaderboard');
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body.leaderboard).toBeDefined();
+    expect(Array.isArray(res.body.leaderboard)).toBe(true);
+  });
 });
