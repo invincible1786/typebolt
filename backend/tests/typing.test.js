@@ -213,4 +213,36 @@ describe('Typing Endpoints', () => {
     expect(res.body.leaderboard).toBeDefined();
     expect(Array.isArray(res.body.leaderboard)).toBe(true);
   });
+
+  // 11. Anti-cheat: timeTaken < 3 seconds recomputes WPM as 0
+  test('11. Anti-cheat: timeTaken < 3 seconds recomputes WPM as 0', async () => {
+    const res = await request(app)
+      .post('/api/typing-result')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        typedText: 'Simplicity is prerequisite for reliability.',
+        timeTaken: 1, // 1 second duration
+        errors: 0,
+        paragraph: 'Simplicity is prerequisite for reliability.'
+      });
+
+    expect(res.statusCode).toBe(201);
+    expect(res.body.result.wpm).toBe(0);
+  });
+
+  // 12. Anti-cheat: mash-and-paste (<10s and <50% accuracy) recomputes WPM as 0
+  test('12. Anti-cheat: mash-and-paste (<10s and <50% accuracy) recomputes WPM as 0', async () => {
+    const res = await request(app)
+      .post('/api/typing-result')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        typedText: 'Simplicity is prerequisite for reliability.',
+        timeTaken: 2,
+        errors: 40, // High errors, accuracy < 50%
+        paragraph: 'Simplicity is prerequisite for reliability.'
+      });
+
+    expect(res.statusCode).toBe(201);
+    expect(res.body.result.wpm).toBe(0);
+  });
 });

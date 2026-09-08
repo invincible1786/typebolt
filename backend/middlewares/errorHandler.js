@@ -28,6 +28,10 @@ const errorHandler = (err, req, res, _next) => {
     statusCode = 400;
     errorCode = 'VALIDATION_ERROR';
     message = err.message;
+  } else if (err.name === 'CastError' || err.name === 'BSONError') {
+    statusCode = 400;
+    errorCode = 'INVALID_ID';
+    message = 'Invalid ID provided';
   } else if (err.code === 11000) {
     // MongoDB duplicate key error
     statusCode = 400;

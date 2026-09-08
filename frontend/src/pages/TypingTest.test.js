@@ -48,15 +48,16 @@ describe('TypingTest Component & Engine', () => {
 
     // After resolution, arena is present
     await waitFor(() => {
-      expect(screen.getByText(/speed typing arena/i)).toBeTruthy();
+      expect(screen.getByRole('heading', { name: /typing test/i })).toBeTruthy();
     });
 
     expect(screen.getByRole('button', { name: /start test/i })).toBeTruthy();
-    expect(screen.getByText(/time mode:/i)).toBeTruthy();
+    expect(screen.getByText(/mode:/i)).toBeTruthy();
+    expect(screen.getByText(/time:/i)).toBeTruthy();
     unmount();
   });
 
-  test('2. Allows selecting different timer modes before test start', async () => {
+  test('2. Allows selecting different timer and category modes before test start', async () => {
     const { unmount } = render(
       <BrowserRouter>
         <TypingTest />
@@ -64,16 +65,20 @@ describe('TypingTest Component & Engine', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText(/speed typing arena/i)).toBeTruthy();
+      expect(screen.getByRole('heading', { name: /typing test/i })).toBeTruthy();
     });
 
+    // Category chips exist
+    expect(screen.getByRole('button', { name: /prose/i })).toBeTruthy();
+    expect(screen.getByRole('button', { name: /code/i })).toBeTruthy();
+
     // Click 15s chip
-    const chip15 = screen.getByRole('button', { name: /⚡ 15s/i });
+    const chip15 = screen.getByRole('button', { name: /^15s$/i });
     fireEvent.click(chip15);
     expect(screen.getByRole('button', { name: /start test \(15s\)/i })).toBeTruthy();
 
     // Click 30s chip
-    const chip30 = screen.getByRole('button', { name: /⚡ 30s/i });
+    const chip30 = screen.getByRole('button', { name: /^30s$/i });
     fireEvent.click(chip30);
     expect(screen.getByRole('button', { name: /start test \(30s\)/i })).toBeTruthy();
     unmount();
@@ -87,7 +92,7 @@ describe('TypingTest Component & Engine', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText(/speed typing arena/i)).toBeTruthy();
+      expect(screen.getByRole('heading', { name: /typing test/i })).toBeTruthy();
     });
 
     const startBtn = screen.getByRole('button', { name: /start test/i });

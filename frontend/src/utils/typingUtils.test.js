@@ -1,4 +1,6 @@
 import {
+  calculateNetWPM,
+  calculateGrossWPM,
   calculateWPM,
   calculateAccuracy,
   countWords,
@@ -10,21 +12,47 @@ import {
 } from './typingUtils';
 
 describe('Typing Utilities Tests', () => {
-  describe('calculateWPM', () => {
-    test('calculates WPM accurately using standard 5 chars = 1 word formula', () => {
-      // 50 characters in 60 seconds = 10 words / 1 min = 10 WPM
-      expect(calculateWPM(50, 60)).toBe(10);
-      // 100 characters in 30 seconds = 20 words / 0.5 min = 40 WPM
-      expect(calculateWPM(100, 30)).toBe(40);
-      // 250 characters in 60 seconds = 50 WPM
+  describe('calculateNetWPM', () => {
+    test('calculates Net WPM deducting errors: ((chars - errors) / 5) / minutes', () => {
+      // 50 characters, 0 errors, 60s = 10 Net WPM
+      expect(calculateNetWPM(50, 0, 60)).toBe(10);
+      // 100 characters, 10 errors, 30s = (90 / 5) / 0.5 = 36 Net WPM
+      expect(calculateNetWPM(100, 10, 30)).toBe(36);
+      // 250 characters, 0 errors, 60s = 50 Net WPM
+      expect(calculateNetWPM(250, 0, 60)).toBe(50);
+    });
+
+    test('returns 0 if elapsed time is less than 2 seconds', () => {
+      // 179 characters, 171 errors, 1s -> 0 Net WPM (instant spam safeguard)
+      expect(calculateNetWPM(179, 171, 1)).toBe(0);
+      expect(calculateNetWPM(50, 0, 1)).toBe(0);
+    });
+
+    test('floors at 0 if errors exceed characters', () => {
+      expect(calculateNetWPM(50, 60, 30)).toBe(0);
+    });
+
+    test('handles zero or negative duration and character count gracefully', () => {
+      expect(calculateNetWPM(0, 0, 60)).toBe(0);
+      expect(calculateNetWPM(100, 0, 0)).toBe(0);
+      expect(calculateNetWPM(-10, 0, 60)).toBe(0);
+      expect(calculateNetWPM(100, 0, -5)).toBe(0);
+    });
+  });
+
+  describe('calculateGrossWPM and calculateWPM', () => {
+    test('calculates Gross WPM accurately using standard 5 chars = 1 word formula', () => {
+      expect(calculateGrossWPM(50, 60)).toBe(10);
+      expect(calculateGrossWPM(100, 30)).toBe(40);
+      expect(calculateGrossWPM(250, 60)).toBe(50);
       expect(calculateWPM(250, 60)).toBe(50);
     });
 
     test('handles zero or negative duration and character count gracefully', () => {
-      expect(calculateWPM(0, 60)).toBe(0);
-      expect(calculateWPM(100, 0)).toBe(0);
-      expect(calculateWPM(-10, 60)).toBe(0);
-      expect(calculateWPM(100, -5)).toBe(0);
+      expect(calculateGrossWPM(0, 60)).toBe(0);
+      expect(calculateGrossWPM(100, 0)).toBe(0);
+      expect(calculateGrossWPM(-10, 60)).toBe(0);
+      expect(calculateGrossWPM(100, -5)).toBe(0);
     });
   });
 
@@ -69,21 +97,37 @@ describe('Typing Utilities Tests', () => {
   });
 
   describe('getSpeedTier and getSpeedCategory', () => {
-    test('categorizes speed tiers according to benchmarks', () => {
-      expect(getSpeedCategory(15)).toBe('Beginner');
-      expect(getSpeedTier(15).tier).toBe('beginner');
+    test('returns Unranked for accuracy below 75% regardless of WPM', () => {
+      expect(getSpeedTier(2148, 4.47).tier).toBe('unranked');
+      expect(getSpeedCategory(2148, 4.47)).toBe('Unranked');
+      expect(getSpeedTier(120, 74.9).tier).toBe('unranked');
+    });
 
-      expect(getSpeedCategory(35)).toBe('Intermediate');
-      expect(getSpeedTier(35).tier).toBe('intermediate');
+    test('categorizes speed tiers with high accuracy', () => {
+      expect(getSpeedCategory(15, 100)).toBe('Beginner');
+      expect(getSpeedTier(15, 100).tier).toBe('beginner');
 
-      expect(getSpeedCategory(55)).toBe('Advanced');
-      expect(getSpeedTier(55).tier).toBe('advanced');
+      expect(getSpeedCategory(35, 100)).toBe('Intermediate');
+      expect(getSpeedTier(35, 100).tier).toBe('intermediate');
 
-      expect(getSpeedCategory(80)).toBe('Expert');
-      expect(getSpeedTier(80).tier).toBe('expert');
+      expect(getSpeedCategory(55, 100)).toBe('Advanced');
+      expect(getSpeedTier(55, 100).tier).toBe('advanced');
 
-      expect(getSpeedCategory(110)).toBe('Master');
-      expect(getSpeedTier(110).tier).toBe('master');
+      expect(getSpeedCategory(80, 100)).toBe('Expert');
+      expect(getSpeedTier(80, 100).tier).toBe('expert');
+
+      // Master requires >= 90 WPM AND >= 96% accuracy
+      expect(getSpeedCategory(110, 98)).toBe('Master');
+      expect(getSpeedTier(110, 98).tier).toBe('master');
+    });
+
+    test('gates high tiers when accuracy is insufficient', () => {
+      // 55 WPM with < 90% accuracy caps at Intermediate
+      expect(getSpeedTier(55, 85).tier).toBe('intermediate');
+      // 80 WPM with < 94% accuracy caps at Advanced
+      expect(getSpeedTier(80, 91).tier).toBe('advanced');
+      // 110 WPM with 93% accuracy falls back to Expert (not Master)
+      expect(getSpeedTier(110, 93).tier).toBe('expert');
     });
   });
 });

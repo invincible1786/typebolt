@@ -5,32 +5,59 @@ const { ValidationError } = require('../utils/customErrors');
 const { calculateAccuracy } = require('../utils/accuracy');
 const cacheService = require('./cacheService');
 
-const PARAGRAPH_BANK = [
-  "Technology has revolutionized the way we communicate, work, and live. From the early days of bulky desktop computers to the modern era of sleek smartphones and smart home devices, our lives are deeply intertwined with digital systems. As technology continues to evolve at a breakneck pace, staying adaptable and continuously learning new digital skills has become essential for personal and professional growth in the twenty-first century.",
-  "The sun is the star at the center of the Solar System. It is a nearly perfect ball of hot plasma, heated to incandescence by nuclear fusion reactions in its core. The sun radiates this energy mainly as light, ultraviolet, and infrared radiation, providing the most important source of energy for life on Earth. Its gravity holds the solar system together, keeping everything from the biggest planets to tiny debris in orbit.",
-  "Deep learning is a subset of machine learning, which is in turn a subset of artificial intelligence. It is based on artificial neural networks with multiple layers, hence the name deep. These neural networks attempt to simulate the behavior of the human brain, allowing it to learn from large amounts of data. By training these systems on massive datasets, they can achieve human-like accuracy in recognizing speech and images.",
-  "The oceans cover more than seventy percent of the Earth's surface and play a crucial role in regulating the planet's climate. They absorb a large portion of the heat and carbon dioxide produced by human activities, helping to buffer the impacts of global warming. Despite their vast size and importance, the oceans remain largely unexplored, with countless marine species and underwater landscapes still waiting to be discovered.",
-  "Writing clean and readable code is just as important as writing functional code. When code is easy to read, it becomes significantly easier to maintain, debug, and scale over time. Developers should strive to follow established style guides, use descriptive variable names, and write small, focused functions. Remember that code is read far more often than it is written, so make the experience pleasant for your future self.",
-  "The Great Wall of China is a series of fortifications that were built across the historical northern borders of ancient Chinese states and Imperial China. It was constructed to protect against nomadic groups from the Eurasian Steppe. With a history of more than two thousand years, the wall stretches over thirteen thousand miles and stands as one of the most impressive architectural achievements in human history.",
-  "Photosynthesis is the biological process by which green plants, algae, and some bacteria convert light energy into chemical energy. Using sunlight, these organisms turn carbon dioxide and water into oxygen and energy-rich sugars. This process is fundamental to life on Earth as it provides the primary source of organic material and oxygen, supporting the vast majority of food chains and ecosystems across our planet.",
-  "A database index is a data structure that improves the speed of data retrieval operations on a database table. However, this speed comes at the cost of additional writes and storage space to maintain the index. Selecting the right fields to index requires a deep understanding of the queries your application runs most frequently, balancing read acceleration against the write performance overhead of index maintenance.",
-  "The theory of relativity, developed by Albert Einstein, revolutionized theoretical physics and astronomy in the early twentieth century. It consists of two theories: special relativity, which addresses the physics of speed and motion in the absence of gravity, and general relativity, which provides a unified description of gravity as a geometric property of space and time. It completely changed our view of the universe.",
-  "Coffee is one of the most popular beverages in the world, enjoyed by millions of people every day. Prepared from the roasted seeds of the Coffea plant, it has a rich history dating back centuries to the ancient coffee forests of Ethiopia. Whether consumed black, with milk, or sweetened, coffee contains caffeine, a natural stimulant that helps improve focus, alertness, and cognitive performance when consumed in moderation.",
-  "Monarch butterflies are famous for their incredible annual migration. Every autumn, millions of these delicate insects fly thousands of miles from North America to their overwintering sites in the forests of central Mexico. Guided by an internal solar compass and magnetic cues, they navigate with astonishing precision, a journey that spans multiple generations and remains one of nature's greatest wonders.",
-  "Renewable energy is energy that is collected from renewable resources, which are naturally replenished on a human timescale. These resources include sunlight, wind, rain, tides, waves, and geothermal heat. Transitioning to renewable energy is critical to reducing carbon emissions, combating global warming, and establishing a sustainable future that does not depend on finite and polluting fossil fuel reserves.",
-  "The concept of time management involves planning and exercising conscious control over the amount of time spent on specific activities. By structuring your day and prioritizing tasks, you can increase efficiency, reduce stress, and achieve a better work-life balance. Effective time management empowers individuals to accomplish more in less time, freeing up space for personal pursuits and creative thinking.",
-  "Modern architecture emphasizes function, simplicity, and the integration of buildings with their natural surroundings. Breaking away from ornate historical styles, modern designs favor clean lines, open floor plans, and materials like steel, concrete, and large panes of glass. This architectural movement seeks to create structures that are both aesthetically pleasing and highly practical for modern living.",
-  "The universe is an vast expanse of space containing all matter and energy, from tiny subatomic particles to massive galaxies. Cosmologists estimate that the universe is approximately thirteen point eight billion years old, expanding continuously since the Big Bang. Exploring the cosmos through powerful telescopes allows us to peer back in time and uncover the mysteries of black holes, dark matter, and distant planets.",
-  "Bicycle commuting is a healthy, economical, and environmentally friendly way to travel to work or school. By choosing to ride a bicycle instead of driving a car, commuters can incorporate physical exercise into their daily routines, reduce traffic congestion, and lower their carbon footprint. Many cities are expanding their cycling infrastructure with dedicated bike lanes to encourage this active form of transport.",
-  "The printing press, invented by Johannes Gutenberg in the fifteenth century, is widely considered one of the most influential events in human history. By enabling the mass production of books, it democratized access to information, accelerated the spread of scientific knowledge, and fueled the Renaissance. The printing press laid the foundation for the modern information age and transformed global education.",
-  "A healthy diet is essential for maintaining physical well-being and preventing chronic diseases. Eating a variety of nutrient-rich foods, including fruits, vegetables, whole grains, lean proteins, and healthy fats, provides the body with the energy and nutrients it needs to function optimally. Combined with regular physical activity, a balanced diet is one of the most powerful tools for longevity and vitality.",
-  "Computer programs are structured sequences of instructions designed to perform specific computational tasks. From low-level assembly operating close to hardware registers to declarative high-level functional paradigms, programming languages empower humans to abstract complex mathematical problems into elegant, maintainable solutions.",
-  "Space exploration stands as humanity's boldest endeavor to understand our origin and destiny among the stars. Robotic probes like Voyager have ventured beyond the heliosphere into interstellar space, carrying greetings from Earth while relaying invaluable telemetry from the cosmic frontier."
+/**
+ * Categorized content pools for typing challenges.
+ * Differentiates TypeBolt from standard clones by offering real code syntax,
+ * curated prose on software architecture, and symbol-dense punctuation tests.
+ */
+const CONTENT_BANK = {
+  prose: [
+    "Simplicity is prerequisite for reliability. In software engineering as in life, elegance emerges not when there is nothing more to add, but when there is nothing left to take away.",
+    "A complex system that works is invariably found to have evolved from a simple system that worked. A complex system designed from scratch never works and cannot be patched up to make it work.",
+    "Premature optimization is the root of all evil in programming. We should forget about small efficiencies about ninety-seven percent of the time: premature optimization creates tangled dependencies.",
+    "The function of good software architecture is to make the structure of the system mirror the problem domain so clearly that modifications feel natural and predictable rather than hazardous.",
+    "Distributed systems are fundamentally about trade-offs between consistency, availability, and partition tolerance. Understanding failure modes is more valuable than assuming sunny-day execution.",
+    "Computers are good at following instructions, but not at reading your mind. Code is written once, but read hundreds of times by engineers trying to debug production under pressure.",
+    "The most dangerous phrase in systems architecture is we have always done it this way. Continuous questioning of constraints reveals where modern tooling makes legacy workarounds obsolete.",
+    "Refactoring without automated tests is simply changing stuff and hoping for the best. Tests provide the confidence boundary required to simplify abstractions without fear of silent regressions."
+  ],
+  code: [
+    "const debounce = (fn, ms = 300) => { let timer; return (...args) => { clearTimeout(timer); timer = setTimeout(() => fn(...args), ms); }; };",
+    "async function fetchWithRetry(url, retries = 3, delay = 1000) { for (let i = 0; i < retries; i++) { try { return await fetch(url); } catch (err) { if (i === retries - 1) throw err; await new Promise(r => setTimeout(r, delay * Math.pow(2, i))); } } }",
+    "type Result<T, E = Error> = { ok: true; value: T } | { ok: false; error: E }; function unwrap<T>(res: Result<T>): T { if (!res.ok) throw res.error; return res.value; }",
+    "def binary_search(arr: list[int], target: int) -> int: left, right = 0, len(arr) - 1 while left <= right: mid = (left + right) // 2 if arr[mid] == target: return mid elif arr[mid] < target: left = mid + 1 else: right = mid - 1 return -1",
+    "SELECT u.id, u.username, COUNT(t.id) AS total_tests, ROUND(AVG(t.wpm), 2) AS avg_wpm FROM users u LEFT JOIN typing_results t ON u.id = t.user_id GROUP BY u.id, u.username ORDER BY avg_wpm DESC LIMIT 10;",
+    "func Worker(id int, jobs <-chan int, results chan<- int) { for j := range jobs { fmt.Printf(\"worker %d started job %d\\n\", id, j); time.Sleep(time.Second); results <- j * 2 } }",
+    "fn find_max<T: PartialOrd + Copy>(slice: &[T]) -> Option<T> { slice.iter().copied().reduce(|acc, item| if item > acc { item } else { acc }) }"
+  ],
+  punctuation: [
+    "Array.prototype.slice.call(arguments, 1); // Extract args: [0, 1, 2], { key: 'value', flag: true }",
+    "regex = /^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\\.[a-zA-Z0-9-.]+$/; isValid = regex.test(email); // (99.9% match)",
+    "git commit -m \"fix(auth): resolve JWT expiration race condition (#402)\" --no-verify && git push origin main",
+    "docker run -d --name redis-cache -p 6379:6379 -v redis_data:/data --restart=unless-stopped redis:7-alpine",
+    "curl -X POST https://api.typebolt.dev/v1/telemetry -H \"Authorization: Bearer <TOKEN>\" -d '{\"wpm\":85,\"accuracy\":98.5}'",
+    "const [state, dispatch] = useReducer((s, a) => ({ ...s, [a.type]: a.payload }), { count: 0, loading: false });"
+  ]
+};
+
+// Flattened fallback list for general random queries
+const ALL_PARAGRAPHS = [
+  ...CONTENT_BANK.prose,
+  ...CONTENT_BANK.code,
+  ...CONTENT_BANK.punctuation
 ];
 
-// Get random paragraph with zero-latency local fallback and Redis caching
-const getRandomParagraph = async () => {
-  const cached = await cacheService.get('paragraph:random');
+/**
+ * Fetch a random typing challenge paragraph with Redis caching and in-memory fallback.
+ * @param {string} [category='prose'] - Content category: 'prose', 'code', or 'punctuation'
+ * @returns {Promise<string>} Selected challenge text
+ */
+const getRandomParagraph = async (category = 'prose') => {
+  const validCategory = CONTENT_BANK[category] ? category : 'prose';
+  const bank = CONTENT_BANK[validCategory] || ALL_PARAGRAPHS;
+  const cacheKey = `paragraph:random:${validCategory}`;
+
+  const cached = await cacheService.get(cacheKey);
   if (cached) {
     if (Array.isArray(cached) && cached.length > 0) {
       return cached[Math.floor(Math.random() * cached.length)];
@@ -40,27 +67,39 @@ const getRandomParagraph = async () => {
     }
   }
 
-  // Pre-seed cache with local bank so subsequent hits are instant
-  await cacheService.set('paragraph:random', PARAGRAPH_BANK, 3600);
-  const randomParagraph = PARAGRAPH_BANK[Math.floor(Math.random() * PARAGRAPH_BANK.length)];
+  // Pre-seed cache with category bank
+  await cacheService.set(cacheKey, bank, 3600);
+  const randomParagraph = bank[Math.floor(Math.random() * bank.length)];
   return randomParagraph;
 };
 
 // Save typing result (with server-side recomputation and anti-cheat validation)
 const saveResult = async ({ userId, typedText, timeTaken, errors, errorCount, paragraph }) => {
+  if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+    throw new ValidationError('Invalid or missing user ID');
+  }
+
   const finalErrors = typeof errorCount === 'number' ? errorCount : errors;
 
   if (typeof typedText !== 'string' || typeof timeTaken !== 'number' || typeof finalErrors !== 'number') {
     throw new ValidationError('Invalid request data');
   }
 
-  // Recompute values server-side using standard chars/5 formula
-  let computedWpm = 0;
-  if (timeTaken > 0) {
-    computedWpm = Math.round((typedText.length / 5) / (timeTaken / 60));
-  }
-
   const computedAccuracy = calculateAccuracy(typedText.length, finalErrors);
+
+  // Anti-cheat & Net WPM safeguards:
+  // 1. Minimum test duration: tests under 3 seconds cannot legitimately complete.
+  // 2. Mash-and-paste safeguard: tests under 10 seconds with < 50% accuracy are zeroed out.
+  let computedWpm = 0;
+  const isTooFast = timeTaken < 3;
+  const isMashed = timeTaken < 10 && computedAccuracy < 50;
+
+  if (!isTooFast && !isMashed && timeTaken > 0) {
+    const correctChars = Math.max(0, typedText.length - finalErrors);
+    const netWords = correctChars / 5;
+    const minutes = timeTaken / 60;
+    computedWpm = Math.max(0, Math.round(netWords / minutes));
+  }
 
   const result = new TypingResult({
     user: new mongoose.Types.ObjectId(userId),
@@ -78,14 +117,16 @@ const saveResult = async ({ userId, typedText, timeTaken, errors, errorCount, pa
   // Invalidate leaderboard cache
   await cacheService.del('leaderboard:top');
 
-  // Update Redis Sorted Set leaderboard if user exists
-  try {
-    const user = await User.findById(userId).select('username').lean();
-    if (user && user.username) {
-      await cacheService.zAdd('leaderboard:global', computedWpm, `${userId}:${user.username}`);
+  // Only update Redis Sorted Set leaderboard if test was valid, not spammed, and computedWpm > 0
+  if (!isTooFast && !isMashed && computedWpm > 0) {
+    try {
+      const user = await User.findById(userId).select('username').lean();
+      if (user && user.username) {
+        await cacheService.zAdd('leaderboard:global', computedWpm, `${userId}:${user.username}`);
+      }
+    } catch (err) {
+      console.warn(`Could not update Redis sorted set for user ${userId}:`, err.message);
     }
-  } catch (err) {
-    console.warn(`Could not update Redis sorted set for user ${userId}:`, err.message);
   }
 
   return result;
@@ -93,6 +134,10 @@ const saveResult = async ({ userId, typedText, timeTaken, errors, errorCount, pa
 
 // Get user stats using aggregation
 const getUserStats = async (userId) => {
+  if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+    throw new ValidationError('Invalid or missing user ID');
+  }
+
   const cacheKey = `stats:${userId}`;
   
   const cachedStats = await cacheService.get(cacheKey);
@@ -140,6 +185,10 @@ const getUserStats = async (userId) => {
 
 // Get user history with pagination
 const getUserHistory = async ({ userId, page = 1, limit = 20 }) => {
+  if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+    throw new ValidationError('Invalid or missing user ID');
+  }
+
   const sanitizedLimit = Math.min(Math.max(1, limit), 100);
   const skip = (page - 1) * sanitizedLimit;
   

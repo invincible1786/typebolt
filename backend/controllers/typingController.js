@@ -2,7 +2,8 @@ const typingService = require('../services/typingService');
 
 const getRandomParagraph = async (req, res, next) => {
   try {
-    const paragraph = await typingService.getRandomParagraph();
+    const category = req.query.category;
+    const paragraph = await typingService.getRandomParagraph(category);
     res.json({ paragraph });
   } catch (error) {
     next(error);

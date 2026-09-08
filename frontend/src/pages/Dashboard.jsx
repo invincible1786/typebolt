@@ -17,19 +17,30 @@ const Dashboard = () => {
   const fetchDashboardData = useCallback(async (targetPage = 1) => {
     try {
       setLoading(true);
-      const [statsResponse, historyResponse] = await Promise.all([
+      const [statsResult, historyResult] = await Promise.allSettled([
         typingAPI.getStats(),
         typingAPI.getHistory(targetPage, 8)
       ]);
-      
-      setStats(statsResponse.data);
-      setHistory(historyResponse.data.results || []);
-      setPagination({
-        page: historyResponse.data.page || 1,
-        totalPages: historyResponse.data.totalPages || 1,
-        total: historyResponse.data.total || 0
-      });
-      setError('');
+
+      if (statsResult.status === 'fulfilled') {
+        setStats(statsResult.value.data);
+      }
+
+      if (historyResult.status === 'fulfilled') {
+        const hData = historyResult.value.data;
+        setHistory(hData.results || []);
+        setPagination({
+          page: hData.page || 1,
+          totalPages: hData.totalPages || 1,
+          total: hData.total || 0
+        });
+      }
+
+      if (statsResult.status === 'rejected' && historyResult.status === 'rejected') {
+        setError('Failed to load dashboard data. Please check your connection and retry.');
+      } else {
+        setError('');
+      }
     } catch (err) {
       setError('Failed to load dashboard data. Please try again.');
     } finally {
@@ -107,11 +118,11 @@ const Dashboard = () => {
                 <div
                   className="tier-badge"
                   style={{
-                    color: getSpeedTier(stats.bestWpm).color,
-                    backgroundColor: getSpeedTier(stats.bestWpm).bg
+                    color: getSpeedTier(stats.bestWpm, stats.averageAccuracy).color,
+                    backgroundColor: getSpeedTier(stats.bestWpm, stats.averageAccuracy).bg
                   }}
                 >
-                  {getSpeedTier(stats.bestWpm).icon} {getSpeedTier(stats.bestWpm).name}
+                  {getSpeedTier(stats.bestWpm, stats.averageAccuracy).icon} {getSpeedTier(stats.bestWpm, stats.averageAccuracy).name}
                 </div>
               )}
             </div>
@@ -175,7 +186,7 @@ const Dashboard = () => {
             <>
               <div className="history-list">
                 {history.map((test, index) => {
-                  const tier = getSpeedTier(test.wpm);
+                  const tier = getSpeedTier(test.wpm, test.accuracy);
                   const errorCount = test.errorCount !== undefined ? test.errorCount : (test.errors || 0);
                   const testId = test._id || test.id || `history-${index}`;
 
@@ -283,7 +294,7 @@ const Dashboard = () => {
                 </thead>
                 <tbody>
                   {leaderboard.map((entry) => {
-                    const tier = getSpeedTier(entry.wpm);
+                    const tier = getSpeedTier(entry.wpm, entry.accuracy);
                     const rankMedal = entry.rank === 1 ? '🥇' : entry.rank === 2 ? '🥈' : entry.rank === 3 ? '🥉' : `#${entry.rank}`;
                     return (
                       <tr key={entry.rank} className={entry.rank <= 3 ? `top-rank rank-${entry.rank}` : ''}>
@@ -313,4 +324,4 @@ const Dashboard = () => {
   );
 };
 
-export default Dashboard; 
+export default Dashboard;

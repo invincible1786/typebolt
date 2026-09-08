@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { AlertCircle } from 'lucide-react';
 import { authAPI } from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import './Register.css';
@@ -65,7 +66,7 @@ const Register = () => {
   return (
     <div className="register-page">
       <div className="form-container">
-        <h2 className="form-title">⚡ Create TypeBolt Account</h2>
+        <h2 className="form-title">Create your account</h2>
         <form onSubmit={handleSubmit} noValidate>
           <div className="form-group">
             <label htmlFor="username" className="form-label">Username</label>
@@ -79,7 +80,11 @@ const Register = () => {
               placeholder="e.g. speedtyper"
               required
             />
-            {fieldErrors.username && <span className="field-error-text">⚠️ {fieldErrors.username}</span>}
+            {fieldErrors.username && (
+              <span className="field-error-text">
+                <AlertCircle size={13} /> {fieldErrors.username}
+              </span>
+            )}
           </div>
           <div className="form-group">
             <label htmlFor="email" className="form-label">Email</label>
@@ -93,7 +98,11 @@ const Register = () => {
               placeholder="you@example.com"
               required
             />
-            {fieldErrors.email && <span className="field-error-text">⚠️ {fieldErrors.email}</span>}
+            {fieldErrors.email && (
+              <span className="field-error-text">
+                <AlertCircle size={13} /> {fieldErrors.email}
+              </span>
+            )}
           </div>
           <div className="form-group">
             <label htmlFor="password" className="form-label">Password</label>
@@ -107,7 +116,11 @@ const Register = () => {
               placeholder="At least 6 characters"
               required
             />
-            {fieldErrors.password && <span className="field-error-text">⚠️ {fieldErrors.password}</span>}
+            {fieldErrors.password && (
+              <span className="field-error-text">
+                <AlertCircle size={13} /> {fieldErrors.password}
+              </span>
+            )}
           </div>
           <div className="form-group">
             <label htmlFor="confirmPassword" className="form-label">Confirm Password</label>
@@ -121,7 +134,11 @@ const Register = () => {
               placeholder="Repeat password"
               required
             />
-            {fieldErrors.confirmPassword && <span className="field-error-text">⚠️ {fieldErrors.confirmPassword}</span>}
+            {fieldErrors.confirmPassword && (
+              <span className="field-error-text">
+                <AlertCircle size={13} /> {fieldErrors.confirmPassword}
+              </span>
+            )}
           </div>
           {error && <div className="error">{error}</div>}
           <button type="submit" className="btn btn-primary" disabled={loading} style={{ marginTop: '15px' }}>
@@ -129,11 +146,13 @@ const Register = () => {
           </button>
         </form>
         <div className="text-center mt-20">
-          <p>Already have an account? <Link to="/login" className="link">Login here</Link></p>
+          <p style={{ color: 'var(--text-muted)', fontSize: '13px', margin: 0 }}>
+            Already have an account? <Link to="/login" className="link">Login here</Link>
+          </p>
         </div>
       </div>
     </div>
   );
 };
 
-export default Register; 
+export default Register;

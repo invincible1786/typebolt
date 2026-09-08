@@ -15,6 +15,7 @@ module.exports = [
         afterAll: "readonly",
         beforeEach: "readonly",
         afterEach: "readonly",
+        jest: "readonly",
         __dirname: "readonly",
         __filename: "readonly"
       }

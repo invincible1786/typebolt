@@ -2,9 +2,13 @@ const { MongoMemoryServer } = require('mongodb-memory-server');
 const mongoose = require('mongoose');
 
 let mongoServer;
+jest.setTimeout(60000);
+
 const getIsDbTest = () => {
   const testPath = expect.getState().testPath;
-  return !testPath || !testPath.includes('utils.test.js');
+  if (!testPath) return true;
+  const normalized = testPath.replace(/\\/g, '/');
+  return !normalized.includes('utils.test.js');
 };
 
 beforeAll(async () => {
@@ -14,20 +18,40 @@ beforeAll(async () => {
   process.env.PORT = '5001';
 
   if (getIsDbTest()) {
-    mongoServer = await MongoMemoryServer.create();
-    const mongoUri = mongoServer.getUri();
-    process.env.MONGO_URI = mongoUri;
+    // Try connecting to local MongoDB first for sub-second test execution
+    const testUri = process.env.TEST_MONGO_URI || 'mongodb://localhost:27017/typebolt_test';
+    try {
+      await mongoose.connect(testUri, {
+        useNewUrlParser: true,
+        useUnifiedTopology: true,
+        serverSelectionTimeoutMS: 1500
+      });
+      process.env.MONGO_URI = testUri;
+    } catch {
+      // Fallback to in-memory server (used in CI / containerized environments)
+      mongoServer = await MongoMemoryServer.create();
+      const mongoUri = mongoServer.getUri();
+      process.env.MONGO_URI = mongoUri;
 
-    await mongoose.connect(mongoUri, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
+      await mongoose.connect(mongoUri, {
+        useNewUrlParser: true,
+        useUnifiedTopology: true,
+      });
+    }
   }
 });
 
 afterAll(async () => {
   if (getIsDbTest()) {
-    await mongoose.disconnect();
+    if (mongoose.connection.readyState !== 0) {
+      // Clean up test database
+      try {
+        await mongoose.connection.dropDatabase();
+      } catch {
+        // ignore drop error
+      }
+      await mongoose.disconnect();
+    }
     if (mongoServer) {
       await mongoServer.stop();
     }
@@ -35,7 +59,7 @@ afterAll(async () => {
 });
 
 beforeEach(async () => {
-  if (getIsDbTest()) {
+  if (getIsDbTest() && mongoose.connection.readyState === 1) {
     const collections = mongoose.connection.collections;
     for (const key in collections) {
       const collection = collections[key];

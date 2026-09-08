@@ -39,7 +39,12 @@ jobs:
           cd backend
           npm test
 
-      - name: Build frontend
+      - name: Run frontend tests
+        run: |
+          cd frontend
+          npm test
+
+      - name: Build frontend (Vite)
         run: |
           cd frontend
           npm run build
